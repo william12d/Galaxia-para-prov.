@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>El Universo Astronómico de Glenda Álvarez</title>
+    <style>
+        #intro {
+            position: fixed;
+            inset: 0;
+            background: #2e1065;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 5000;
+            transition: opacity 1.5s ease;
+        }
+        .card {
+            background: #3b0764;
+            width: 85%;
+            max-width: 450px;
+            padding: 35px 25px;
+            border-radius: 35px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+            text-align: center;
+            border: 1px solid rgba(216, 180, 254, 0.2);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .card h1 {
+            margin: 0 0 25px 0;
+            font-size: 2.3rem;
+            color: #ffffff;
+        }
+        .msg-box {
+            background: #ffffff;
+            padding: 22px 20px;
+            border-radius: 20px;
+            margin: 0 auto 25px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        }
+        .msg-box p {
+            margin: 0;
+            font-size: 1.15rem;
+            color: #1f2937;
+            font-weight: 500;
+            line-height: 1.4;
+        }
+        .secondary-btn {
+            background: #ffffff;
+            color: #1f2937;
+            border: none;
+            padding: 16px 20px;
+            font-size: 1.05rem;
+            font-weight: 600;
+            border-radius: 50px;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        #startBtn {
+            background: linear-gradient(135deg, #a855f7, #ec4899);
+            color: #fff;
+            border: none;
+            padding: 16px 30px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            width: 100%;
+            box-shadow: 0 8px 25px rgba(168, 85, 247, 0.5);
+            transition: transform 0.3s ease;
+        }
+        #startBtn:hover {
+            transform: scale(1.03);
+        }
+        .small-text {
+            margin-top: 25px;
+            font-size: 0.95rem;
+            color: #e9d5ff;
+        }
+        body, html {
+            margin: 0;
+            height: 100%;
+            background: #000000;
+            overflow: hidden;
+        }
+        canvas {
+            display: block;
+        }
+        .player {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 600px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            border: 2px solid #c084fc;
+            border-radius: 999px;
+            background: rgba(9, 13, 22, 0.85);
+            box-shadow: 0 0 20px rgba(192, 132, 252, 0.3);
+            z-index: 1000;
+            font-family: sans-serif;
+            color: #fff;
+            font-size: 14px;
+        }
+        .player button {
+            background: 0 0;
+            border: none;
+            color: #c084fc;
+            font-size: 22px;
+            cursor: pointer;
+            filter: drop-shadow(0 0 6px #c084fc);
+            transition: transform .2s;
+        }
+        .player button:hover {
+            transform: scale(1.2);
+        }
+        .progress {
+            flex-grow: 1;
+            height: 14px;
+            background: rgba(255,255,255,.12);
+            border-radius: 999px;
+            overflow: hidden;
+            cursor: pointer;
+            position: relative;
+        }
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(270deg, #7e22ce, #c084fc, #e879f9, #7e22ce);
+            background-size: 400% 400%;
+            border-radius: 999px;
+            animation: flowing 6s ease infinite;
+        }
+        @keyframes flowing {
+            0%{background-position:0 50%}
+            50%{background-position:100% 50%}
+            100%{background-position:0 50%}
+        }
+        .time {
+            min-width: 74px;
+            text-align: right;
+            font-size: 12px;
+            color: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="intro">
+      <div class="card">
+        <h1>Para mi Prov 💘</h1>
+        <div class="msg-box">
+          <p>Eres una mujer maravillosa, hermosa e inteligente</p>
+        </div>
+        <button class="secondary-btn">¿No es suficiente? Mmmm...</button>
+        <button id="startBtn">Descubre mi universo ✨</button>
+        <p class="small-text">Cada palabra tiene un significado especial</p>
+      </div>
+    </div>
+
+    <canvas id="c"></canvas>
+
+    <div class="player">
+        <button id="play">▶️</button>
+        <div class="progress" id="progress">
+            <div class="progress-bar" id="progress-bar"></div>
+        </div>
+        <div class="time" id="time">0:00 / 0:00</div>
+    </div>
+
+    <audio id="audio" loop>
+        <source src="https://files.catbox.moe/ntsuxn.mp3" type="audio/mpeg">
+    </audio>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        const audio = document.getElementById("audio"),
+              playBtn = document.getElementById("play"),
+              progress = document.getElementById("progress"),
+              progressBar = document.getElementById("progress-bar"),
+              timeDisplay = document.getElementById("time");
+
+        let isPlaying = false;
+        let isExpanded = false;
+        let expandProgress = 0;
+
+        function formatTime(e) {
+            if (!isFinite(e)) return "0:00";
+            return Math.floor(e/60) + ":" + Math.floor(e%60).toString().padStart(2,"0");
+        }
+
+        playBtn.addEventListener("click", (() => {
+            if (isPlaying) {
+                audio.pause();
+                playBtn.textContent = "▶️";
+                isPlaying = false;
+            } else {
+                audio.play().then(() => {
+                    playBtn.textContent = "⏸️";
+                    isPlaying = true;
+                }).catch(err => console.log("Error al reproducir audio:", err));
+            }
+        }));
+
+        audio.addEventListener("timeupdate", (() => {
+            const e = audio.currentTime / audio.duration * 100;
+            progressBar.style.width = (isFinite(e) ? e : 0) + "%";
+            timeDisplay.textContent = formatTime(audio.currentTime) + " / " + formatTime(audio.duration);
+        }));
+
+        progress.addEventListener("click", (e => {
+            const t = progress.getBoundingClientRect(),
+                  n = (e.clientX - t.left) / t.width;
+            isFinite(audio.duration) && (audio.currentTime = n * audio.duration);
+        }));
+
+        const canvas = document.getElementById("c"),
+              renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
+
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+        renderer.setSize(innerWidth, innerHeight);
+
+        const scene = new THREE.Scene(),
+              camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, .1, 5e4);
+
+        scene.background = new THREE.Color(0x000000);
+
+        // Distancia final ampliada a 550 para que se aleje más del corazón
+        let targetDist = 550, currentDist = 8000, rotX = .2, rotY = 0;
+
+        const universeGroup = new THREE.Group();
+        scene.add(universeGroup);
+
+        const purePurplePalette = [
+            new THREE.Color("#f3e8ff"),
+            new THREE.Color("#e9d5ff"),
+            new THREE.Color("#d8b4fe"),
+            new THREE.Color("#c084fc"),
+            new THREE.Color("#a855f7"),
+            new THREE.Color("#9333ea"),
+            new THREE.Color("#7e22ce"),
+            new THREE.Color("#6b21a8")
+        ];
+
+        // 1. CAMPO ESTELAR INFINITO PROFUNDO
+        const denseStarCount = 160000;
+        const starGeo = new THREE.BufferGeometry();
+        const starPositions = new Float32Array(denseStarCount * 3);
+        const starOriginalPositions = new Float32Array(denseStarCount * 3);
+        const starColors = new Float32Array(denseStarCount * 3);
+
+        for (let i = 0; i < denseStarCount; i++) {
+            const i3 = i * 3;
+            const radius = 350 + Math.random() * 35000;
+            const theta = Math.random() * Math.PI * 2;
+            const phi = Math.acos(2 * Math.random() - 1);
+
+            const x = radius * Math.sin(phi) * Math.cos(theta);
+            const y = radius * Math.cos(phi) * 0.75;
+            const z = radius * Math.sin(phi) * Math.sin(theta);
+
+            starOriginalPositions[i3] = x;
+            starOriginalPositions[i3 + 1] = y;
+            starOriginalPositions[i3 + 2] = z;
+
+            starPositions[i3] = x * 0.005;
+            starPositions[i3 + 1] = y * 0.005;
+            starPositions[i3 + 2] = z * 0.005;
+
+            const randomColor = purePurplePalette[Math.floor(Math.random() * purePurplePalette.length)];
+            starColors[i3] = randomColor.r;
+            starColors[i3 + 1] = randomColor.g;
+            starColors[i3 + 2] = randomColor.b;
+        }
+
+        starGeo.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+        starGeo.setAttribute('color', new THREE.BufferAttribute(starColors, 3));
+
+        const starMat = new THREE.PointsMaterial({
+            size: 1.6,
+            vertexColors: true,
+            transparent: true,
+            opacity: 1.0,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false
+        });
+
+        const starField = new THREE.Points(starGeo, starMat);
+        universeGroup.add(starField);
+
+        // 2. ESTRELLAS FUGACES PÚRPURAS
+        const shootingStarsCount = 20;
+        const shootingStarGeo = new THREE.BufferGeometry();
+        const shootingStarPositions = new Float32Array(shootingStarsCount * 3);
+        const shootingStarData = [];
+
+        for (let i = 0; i < shootingStarsCount; i++) {
+            shootingStarData.push({
+                x: (Math.random() - 0.5) * 4000,
+                y: (Math.random() - 0.5) * 4000,
+                z: (Math.random() - 0.5) * 4000,
+                vx: (Math.random() - 0.5) * 20 - 5,
+                vy: (Math.random() - 0.5) * 20 - 5,
+                vz: (Math.random() - 0.5) * 20 - 5,
+                life: Math.random() * 100
+            });
+        }
+
+        for (let i = 0; i < shootingStarsCount; i++) {
+            shootingStarPositions[i * 3] = shootingStarData[i].x;
+            shootingStarPositions[i * 3 + 1] = shootingStarData[i].y;
+            shootingStarPositions[i * 3 + 2] = shootingStarData[i].z;
+        }
+
+        shootingStarGeo.setAttribute('position', new THREE.BufferAttribute(shootingStarPositions, 3));
+        const shootingStarMat = new THREE.PointsMaterial({
+            size: 4.5,
+            color: new THREE.Color("#e9d5ff"),
+            transparent: true,
+            opacity: 1.0,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false
+        });
+
+        const shootingStarsField = new THREE.Points(shootingStarGeo, shootingStarMat);
+        universeGroup.add(shootingStarsField);
+
+        // 3. NÚCLEO ESFÉRICO PÚRPURA
+        const coreCount = 40000;
+        const coreGeo = new THREE.BufferGeometry();
+        const corePositions = new Float32Array(coreCount * 3);
+        const coreOriginalPositions = new Float32Array(coreCount * 3);
+        const coreColors = new Float32Array(coreCount * 3);
+
+        for (let i = 0; i < coreCount; i++) {
+            const i3 = i * 3;
+            const radius = 350 + Math.random() * 25000; 
+            const theta = Math.random() * Math.PI * 2;
+            const phi = Math.acos(2 * Math.random() - 1);
+
+            const x = radius * Math.sin(phi) * Math.cos(theta);
+            const y = radius * Math.cos(phi) * 0.75;
+            const z = radius * Math.sin(phi) * Math.sin(theta);
+
+            coreOriginalPositions[i3] = x;
+            coreOriginalPositions[i3 + 1] = y;
+            coreOriginalPositions[i3 + 2] = z;
+
+            corePositions[i3] = x * 0.005;
+            corePositions[i3 + 1] = y * 0.005;
+            corePositions[i3 + 2] = z * 0.005;
+
+            const coreColor = purePurplePalette[Math.floor(Math.random() * purePurplePalette.length)];
+            coreColors[i3] = coreColor.r;
+            coreColors[i3 + 1] = coreColor.g;
+            coreColors[i3 + 2] = coreColor.b;
+        }
+
+        coreGeo.setAttribute('position', new THREE.BufferAttribute(corePositions, 3));
+        coreGeo.setAttribute('color', new THREE.BufferAttribute(coreColors, 3));
+
+        const coreMat = new THREE.PointsMaterial({
+            size: 1.5,
+            vertexColors: true,
+            transparent: true,
+            opacity: 0.5,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false
+        });
+
+        const coreField = new THREE.Points(coreGeo, coreMat);
+        universeGroup.add(coreField);
+
+        // 4. NÚCLEO DE CORAZÓN
+        function makeHeartTexture() {
+            const t = document.createElement("canvas");
+            t.width = 1024; t.height = 1024;
+            const n = t.getContext("2d");
+            n.clearRect(0, 0, t.width, t.height);
+
+            n.save();
+            n.translate(t.width / 2, t.height / 2 + 30);
+            
+            const heartStarColors = ["#ffffff", "#f3e8ff", "#e9d5ff", "#d8b4fe", "#c084fc", "#a855f7", "#9333ea"];
+            
+            for (let i = 0; i < 8500; i++) {
+                const a = Math.random() * Math.PI * 2;
+                const hx = 16 * Math.pow(Math.sin(a), 3);
+                const hy = -(13 * Math.cos(a) - 5 * Math.cos(2*a) - 2 * Math.cos(3*a) - Math.cos(4*a));
+                
+                const scale = 15.0 + Math.random() * 6.0;
+                const px = hx * scale + (Math.random() - 0.5) * 12;
+                const py = hy * scale + (Math.random() - 0.5) * 12;
+                
+                n.fillStyle = heartStarColors[Math.floor(Math.random() * heartStarColors.length)];
+                const pSize = 2.2 + Math.random() * 2.8;
+                n.globalAlpha = 0.95 + Math.random() * 0.05;
+                n.beginPath();
+                n.arc(px, py, pSize, 0, Math.PI * 2);
+                n.fill();
+            }
+            n.restore();
+
+            n.font = "bold 76px 'Segoe UI', Arial";
+            n.textAlign = "center";
+            n.textBaseline = "middle";
+            n.shadowColor = "#d8b4fe";
+            n.shadowBlur = 45;
+            n.fillStyle = "#ffffff";
+            n.fillText("Love you", t.width / 2, t.height / 2 + 10);
+
+            const texture = new THREE.CanvasTexture(t);
+            texture.generateMipmaps = true;
+            texture.minFilter = THREE.LinearMipmapLinearFilter;
+            return texture;
+        }
+
+        const centerTex = makeHeartTexture(),
+              centerMat = new THREE.SpriteMaterial({ map: centerTex, transparent: true, opacity: 0.35 }),
+              centerSprite = new THREE.Sprite(centerMat);
+
+        centerSprite.scale.set(280, 280, 1);
+        centerSprite.position.set(0, 0, 0);
+        universeGroup.add(centerSprite);
+
+        // 5. FRASES FLOTANTES
+        function makeTextTexture(e) {
+            const t = document.createElement("canvas");
+            t.width = 1024; t.height = 256;
+            const n = t.getContext("2d");
+            n.clearRect(0, 0, t.width, t.height);
+
+            n.font = "bold 58px 'Segoe UI', Arial";
+            n.textAlign = "center";
+            n.textBaseline = "middle";
+            
+            n.shadowColor = "#c084fc";
+            n.shadowBlur = 25;
+            n.lineWidth = 9;
+            n.strokeStyle = "#4c1d95"; 
+            n.strokeText(e, t.width / 2, t.height / 2);
+            
+            n.fillStyle = "#ffffff";
+            n.fillText(e, t.width / 2, t.height / 2);
+            
+            const texture = new THREE.CanvasTexture(t);
+            texture.generateMipmaps = true;
+            texture.minFilter = THREE.LinearMipmapLinearFilter;
+            return texture;
+        }
+
+        const WORDS = [
+            "💖 Providence", "💍 Eres mi gran amor", "✨ Mi compañera ideal", "🌹 El amor de mi vida",
+            "🥰 Mi razón de sonreír", "🌌 Eres mi universo entero", "💫 Contigo todo es mejor", "💎 Eres invaluable",
+            "👑 Mi reina hermosa", "💖 Preciosa y única", "✨ Mi bendición más grande", "🔥 Amor eterno",
+            "🌸 Tu sonrisa me ilumina", "🕊️ Mi paz y refugio", "🔮 Magia en mi vida", "🍀 Mi mayor fortuna",
+            "💡 Mi luz en la oscuridad", "🍒 Mi dulce amor", "🌊 Mi calma favorita", "🦋 Eres libertad y alegría",
+            "🎶 La melodía de mis días", "🌟 Brillas con luz propia", "❤️ Mi corazón es tuyo", "🥰 Eres perfecta",
+            "✨ Mi inspiración diaria", "🌷 Juntos por siempre", "🎀 Mi razón de ser", "🌠 Mi estrella más brillante",
+            "💖 Te amo muchísimo", "🌹 Mi media naranja", "🥰 Mi pedacito de cielo", "🌌 Dueña de mis sueños",
+            "💫 Inigualable y hermosa", "💎 Mi tesoro más preciado", "👑 Mi amor eterno", "🔥 Mi fuego en el alma",
+            "🌸 Ternura infinita", "🕊️ Paz inquebrantable", "🔮 Encanto puro", "🍀 Suerte de tenerte",
+            "💡 Guía de mi camino", "🍒 Dulzura andante", "🌊 Océano de cariño", "🦋 Alegría constante",
+            "🎶 Armonía perfecta", "🌟 Luz de mis ojos", "❤️ Amor verdadero", "🥰 Linda por dentro y fuera",
+            "✨ Belleza infinita", "🌷 Pasión y ternura", "🎀 Mi compañera fiel", "🌠 Destino compartido",
+            "💖 Sonrisa encantadora", "🌹 Dulce tentación", "🥰 Abrazo seguro", "🌌 Universo de amor",
+            "💫 Magia estelar", "💎 Joya rutilante", "👑 Nobleza pura", "🔥 Pasión desbordada"
+        ];
+        
+        const textGroup = new THREE.Group();
+        universeGroup.add(textGroup);
+
+        const textOriginalPositions = [];
+        for (let e = 0; e < WORDS.length; e++) {
+            const t = makeTextTexture(WORDS[e]),
+                  n = new THREE.SpriteMaterial({ map: t, transparent: true, depthWrite: false, opacity: 0 }),
+                  a = new THREE.Sprite(n);
+            a.scale.set(75, 18, 1);
+            const r = Math.acos(2 * Math.random() - 1),
+                  i = Math.random() * Math.PI * 2,
+                  o = 200 + 300 * Math.random(); 
+            
+            const posX = o * Math.sin(r) * Math.cos(i);
+            const posZ = o * Math.sin(r) * Math.sin(i);
+            const posY = (o * Math.cos(r));
+
+            textOriginalPositions.push({ x: posX, y: posY, z: posZ, speed: .0003 + .0006 * Math.random(), theta: i, phi: r, radius: o });
+            a.position.set(posX * 0.005, posY * 0.005, posZ * 0.005);
+            textGroup.add(a);
+        }
+
+        let dragging = false, lastX = 0, lastY = 0;
+        function onDown(e) {
+            dragging = true;
+            const t = e.touches ? e.touches[0] : e;
+            lastX = t.clientX; lastY = t.clientY;
+        }
+        function onMove(e) {
+            if (!dragging) return;
+            const t = e.touches ? e.touches[0] : e,
+                  n = (t.clientX - lastX) / innerWidth,
+                  a = (t.clientY - lastY) / innerHeight;
+            rotY -= 3 * n;
+            rotX = Math.max(-1.2, Math.min(1.2, rotX + 2.2 * a));
+            lastX = t.clientX; lastY = t.clientY;
+        }
+        function onUp() { dragging = false; }
+
+        addEventListener("mousedown", onDown);
+        addEventListener("mousemove", onMove);
+        addEventListener("mouseup", onUp);
+        addEventListener("touchstart", onDown, { passive: true });
+        addEventListener("touchmove", onMove, { passive: true });
+        addEventListener("touchend", onUp, { passive: true });
+
+        addEventListener("wheel", (e => {
+            targetDist += 1.2 * e.deltaY;
+            targetDist = Math.max(10, Math.min(25000, targetDist));
+        }), { passive: true });
+
+        let pinch = 0;
+        addEventListener("touchmove", (e => {
+            if (e.touches && 2 === e.touches.length) {
+                e.preventDefault();
+                const t = e.touches[0].clientX - e.touches[1].clientX,
+                      n = e.touches[0].clientY - e.touches[1].clientY,
+                      a = Math.hypot(t, n);
+                pinch && (targetDist += 4.0 * (pinch - a), targetDist = Math.max(10, Math.min(25000, targetDist))),
+                pinch = a;
+            }
+        }), { passive: false });
+
+        addEventListener("touchend", (() => { pinch = 0; }), { passive: true });
+
+        let t = 0;
+        function tick() {
+            requestAnimationFrame(tick);
+            t += .01;
+
+            if (isExpanded) {
+                expandProgress += 0.0008; 
+                if (expandProgress > 1) expandProgress = 1;
+                // El giro se detiene por completo al llegar al final
+                rotY += 0.004 * (1 - expandProgress);
+            }
+            
+            const rawFactor = isExpanded ? Math.min(1, expandProgress) : 0;
+            const factor = rawFactor * rawFactor * (3 - 2 * rawFactor);
+            const invFactor = 0.005 + 0.995 * factor;
+
+            const posArr = starGeo.attributes.position.array;
+            for (let i = 0; i < denseStarCount; i++) {
+                const i3 = i * 3;
+                posArr[i3] = starOriginalPositions[i3] * invFactor;
+                posArr[i3 + 1] = starOriginalPositions[i3 + 1] * invFactor;
+                posArr[i3 + 2] = starOriginalPositions[i3 + 2] * invFactor;
+            }
+            starGeo.attributes.position.needsUpdate = true;
+
+            const ssPosArr = shootingStarGeo.attributes.position.array;
+            for (let i = 0; i < shootingStarsCount; i++) {
+                let s = shootingStarData[i];
+                s.x += s.vx;
+                s.y += s.vy;
+                s.z += s.vz;
+                s.life += 1;
+                if (s.life > 150 || Math.abs(s.x) > 5000 || Math.abs(s.y) > 5000 || Math.abs(s.z) > 5000) {
+                    s.x = (Math.random() - 0.5) * 3000;
+                    s.y = (Math.random() - 0.5) * 3000;
+                    s.z = (Math.random() - 0.5) * 3000;
+                    s.vx = (Math.random() - 0.5) * 20 - 5;
+                    s.vy = (Math.random() - 0.5) * 20 - 5;
+                    s.vz = (Math.random() - 0.5) * 20 - 5;
+                    s.life = 0;
+                }
+                ssPosArr[i * 3] = s.x * invFactor;
+                ssPosArr[i * 3 + 1] = s.y * invFactor;
+                ssPosArr[i * 3 + 2] = s.z * invFactor;
+            }
+            shootingStarGeo.attributes.position.needsUpdate = true;
+
+            const coreArr = coreGeo.attributes.position.array;
+            for (let i = 0; i < coreCount; i++) {
+                const i3 = i * 3;
+                const pulse = 1 + 0.02 * Math.sin(t * 3 + i);
+                coreArr[i3] = coreOriginalPositions[i3] * invFactor * pulse;
+                coreArr[i3 + 1] = coreOriginalPositions[i3 + 1] * invFactor * pulse;
+                coreArr[i3 + 2] = coreOriginalPositions[i3 + 2] * invFactor * pulse;
+            }
+            coreGeo.attributes.position.needsUpdate = true;
+
+            coreMat.opacity = 0.5 * (1 - factor);
+            centerMat.opacity = 0.35 + (0.65 * factor);
+
+            const currentScale = (280 * (0.3 + 0.7 * factor)) * (350 / Math.max(10, currentDist));
+            centerSprite.scale.set(Math.max(10, currentScale), Math.max(10, currentScale), 1);
+
+            textGroup.children.forEach((e, index) => {
+                e.material.opacity = factor; 
+                const data = textOriginalPositions[index];
+                data.theta += data.speed;
+                const baseRadius = data.radius * invFactor;
+                e.position.x = baseRadius * Math.sin(data.phi) * Math.cos(data.theta);
+                e.position.z = baseRadius * Math.sin(data.phi) * Math.sin(data.theta);
+                e.position.y = (data.radius * Math.cos(data.phi)) * invFactor;
+            });
+
+            // --- CÁMARA ESTABLE Y CONGELADA AL FINALIZAR ---
+            // Si la expansión llega al 100% (expandProgress >= 1), fijamos la distancia objetivo exactamente en 550 
+            // e impedimos cualquier actualización posterior que cause re-acercamientos.
+            const targetCameraDist = isExpanded ? 550 : 8000;
+            if (expandProgress < 1) {
+                targetDist += .012 * (targetCameraDist - targetDist);
+                currentDist += .03 * (targetDist - currentDist);
+            } else {
+                currentDist = 550; // Congelado de forma permanente para que no vuelva a moverse solo
+            }
+
+            const n = Math.cos(rotX), a = Math.sin(rotX), r = Math.cos(rotY), i = Math.sin(rotY);
+            camera.position.set(currentDist * i * n, currentDist * a, currentDist * r * n);
+            camera.lookAt(0, 0, 0);
+            renderer.render(scene, camera);
+        }
+        tick();
+
+        document.getElementById("startBtn").addEventListener("click", () => {
+            const intro = document.getElementById("intro");
+            intro.style.opacity = "0";
+            setTimeout(() => { intro.style.display = "none"; }, 1500);
+
+            isExpanded = true;
+            expandProgress = 0;
+
+            audio.play().then(() => {
+                isPlaying = true;
+                playBtn.textContent = "⏸️";
+            }).catch(err => {
+                console.log("Reproducción automática bloqueada por el navegador:", err);
+            });
+        });
+    </script>
+</body>
+</html>
