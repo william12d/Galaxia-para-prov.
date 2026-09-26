@@ -88,66 +88,6 @@
         canvas {
             display: block;
         }
-        .player {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 90%;
-            max-width: 600px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px;
-            border: 2px solid #c084fc;
-            border-radius: 999px;
-            background: rgba(9, 13, 22, 0.85);
-            box-shadow: 0 0 20px rgba(192, 132, 252, 0.3);
-            z-index: 1000;
-            font-family: sans-serif;
-            color: #fff;
-            font-size: 14px;
-        }
-        .player button {
-            background: 0 0;
-            border: none;
-            color: #c084fc;
-            font-size: 22px;
-            cursor: pointer;
-            filter: drop-shadow(0 0 6px #c084fc);
-            transition: transform .2s;
-        }
-        .player button:hover {
-            transform: scale(1.2);
-        }
-        .progress {
-            flex-grow: 1;
-            height: 14px;
-            background: rgba(255,255,255,.12);
-            border-radius: 999px;
-            overflow: hidden;
-            cursor: pointer;
-            position: relative;
-        }
-        .progress-bar {
-            height: 100%;
-            width: 0%;
-            background: linear-gradient(270deg, #7e22ce, #c084fc, #e879f9, #7e22ce);
-            background-size: 400% 400%;
-            border-radius: 999px;
-            animation: flowing 6s ease infinite;
-        }
-        @keyframes flowing {
-            0%{background-position:0 50%}
-            50%{background-position:100% 50%}
-            100%{background-position:0 50%}
-        }
-        .time {
-            min-width: 74px;
-            text-align: right;
-            font-size: 12px;
-            color: #94a3b8;
-        }
     </style>
 </head>
 <body>
@@ -166,59 +106,16 @@
 
     <canvas id="c"></canvas>
 
-    <div class="player">
-        <button id="play">▶️</button>
-        <div class="progress" id="progress">
-            <div class="progress-bar" id="progress-bar"></div>
-        </div>
-        <div class="time" id="time">0:00 / 0:00</div>
-    </div>
-
     <audio id="audio" loop>
         <source src="https://files.catbox.moe/ntsuxn.mp3" type="audio/mpeg">
     </audio>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
-        const audio = document.getElementById("audio"),
-              playBtn = document.getElementById("play"),
-              progress = document.getElementById("progress"),
-              progressBar = document.getElementById("progress-bar"),
-              timeDisplay = document.getElementById("time");
+        const audio = document.getElementById("audio");
 
-        let isPlaying = false;
         let isExpanded = false;
         let expandProgress = 0;
-
-        function formatTime(e) {
-            if (!isFinite(e)) return "0:00";
-            return Math.floor(e/60) + ":" + Math.floor(e%60).toString().padStart(2,"0");
-        }
-
-        playBtn.addEventListener("click", (() => {
-            if (isPlaying) {
-                audio.pause();
-                playBtn.textContent = "▶️";
-                isPlaying = false;
-            } else {
-                audio.play().then(() => {
-                    playBtn.textContent = "⏸️";
-                    isPlaying = true;
-                }).catch(err => console.log("Error al reproducir audio:", err));
-            }
-        }));
-
-        audio.addEventListener("timeupdate", (() => {
-            const e = audio.currentTime / audio.duration * 100;
-            progressBar.style.width = (isFinite(e) ? e : 0) + "%";
-            timeDisplay.textContent = formatTime(audio.currentTime) + " / " + formatTime(audio.duration);
-        }));
-
-        progress.addEventListener("click", (e => {
-            const t = progress.getBoundingClientRect(),
-                  n = (e.clientX - t.left) / t.width;
-            isFinite(audio.duration) && (audio.currentTime = n * audio.duration);
-        }));
 
         const canvas = document.getElementById("c"),
               renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
@@ -231,7 +128,6 @@
 
         scene.background = new THREE.Color(0x000000);
 
-        // Distancia final ampliada a 550 para que se aleje más del corazón
         let targetDist = 550, currentDist = 8000, rotX = .2, rotY = 0;
 
         const universeGroup = new THREE.Group();
@@ -248,7 +144,7 @@
             new THREE.Color("#6b21a8")
         ];
 
-        // 1. CAMPO ESTELAR INFINITO PROFUNDO
+        // 1. CAMPO ESTELAR
         const denseStarCount = 160000;
         const starGeo = new THREE.BufferGeometry();
         const starPositions = new Float32Array(denseStarCount * 3);
@@ -294,7 +190,7 @@
         const starField = new THREE.Points(starGeo, starMat);
         universeGroup.add(starField);
 
-        // 2. ESTRELLAS FUGACES PÚRPURAS
+        // 2. ESTRELLAS FUGACES
         const shootingStarsCount = 20;
         const shootingStarGeo = new THREE.BufferGeometry();
         const shootingStarPositions = new Float32Array(shootingStarsCount * 3);
@@ -331,7 +227,7 @@
         const shootingStarsField = new THREE.Points(shootingStarGeo, shootingStarMat);
         universeGroup.add(shootingStarsField);
 
-        // 3. NÚCLEO ESFÉRICO PÚRPURA
+        // 3. NÚCLEO ESFÉRICO
         const coreCount = 40000;
         const coreGeo = new THREE.BufferGeometry();
         const corePositions = new Float32Array(coreCount * 3);
@@ -377,7 +273,7 @@
         const coreField = new THREE.Points(coreGeo, coreMat);
         universeGroup.add(coreField);
 
-        // 4. NÚCLEO DE CORAZÓN
+        // 4. CORAZÓN CENTRAL
         function makeHeartTexture() {
             const t = document.createElement("canvas");
             t.width = 1024; t.height = 1024;
@@ -519,13 +415,13 @@
         addEventListener("touchmove", onMove, { passive: true });
         addEventListener("touchend", onUp, { passive: true });
 
-        addEventListener("wheel", (e => {
+        addEventListener("wheel", (e) => {
             targetDist += 1.2 * e.deltaY;
             targetDist = Math.max(10, Math.min(25000, targetDist));
-        }), { passive: true });
+        }), { passive: true };
 
         let pinch = 0;
-        addEventListener("touchmove", (e => {
+        addEventListener("touchmove", (e) => {
             if (e.touches && 2 === e.touches.length) {
                 e.preventDefault();
                 const t = e.touches[0].clientX - e.touches[1].clientX,
@@ -534,9 +430,9 @@
                 pinch && (targetDist += 4.0 * (pinch - a), targetDist = Math.max(10, Math.min(25000, targetDist))),
                 pinch = a;
             }
-        }), { passive: false });
+        }, { passive: false });
 
-        addEventListener("touchend", (() => { pinch = 0; }), { passive: true });
+        addEventListener("touchend", () => { pinch = 0; }, { passive: true });
 
         let t = 0;
         function tick() {
@@ -546,7 +442,6 @@
             if (isExpanded) {
                 expandProgress += 0.0008; 
                 if (expandProgress > 1) expandProgress = 1;
-                // El giro se detiene por completo al llegar al final
                 rotY += 0.004 * (1 - expandProgress);
             }
             
@@ -611,15 +506,12 @@
                 e.position.y = (data.radius * Math.cos(data.phi)) * invFactor;
             });
 
-            // --- CÁMARA ESTABLE Y CONGELADA AL FINALIZAR ---
-            // Si la expansión llega al 100% (expandProgress >= 1), fijamos la distancia objetivo exactamente en 550 
-            // e impedimos cualquier actualización posterior que cause re-acercamientos.
             const targetCameraDist = isExpanded ? 550 : 8000;
             if (expandProgress < 1) {
                 targetDist += .012 * (targetCameraDist - targetDist);
                 currentDist += .03 * (targetDist - currentDist);
             } else {
-                currentDist = 550; // Congelado de forma permanente para que no vuelva a moverse solo
+                currentDist = 550;
             }
 
             const n = Math.cos(rotX), a = Math.sin(rotX), r = Math.cos(rotY), i = Math.sin(rotY);
@@ -637,10 +529,7 @@
             isExpanded = true;
             expandProgress = 0;
 
-            audio.play().then(() => {
-                isPlaying = true;
-                playBtn.textContent = "⏸️";
-            }).catch(err => {
+            audio.play().catch(err => {
                 console.log("Reproducción automática bloqueada por el navegador:", err);
             });
         });
